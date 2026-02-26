@@ -358,7 +358,7 @@ const CONSTANTS = {
         DSR_LIMIT: 0.4,           // DSR 40%
         STRESS_RATE: 0.012,       // 스트레스 금리 1.2% (Phase 3 예상)
         LTV: {
-            REGULATED: { 0: 0.5, 1: 0.4, 2: 0.0 },     // 규제 (무주택, 1주택, 다주택)
+            REGULATED: { 0: 0.4, 1: 0.4, 2: 0.0 },     // 규제 (무주택, 1주택, 다주택)
             NON_REGULATED: { 0: 0.7, 1: 0.6, 2: 0.3 }  // 비규제 (무주택, 1주택, 다주택)
         }
     },
@@ -623,7 +623,13 @@ function updateDashboard() {
     // 3. 시나리오 1 산출 (실거주)
     const ltvLimit = getLtvLimit(price, isRegulated, homes, isFirstHome);
     const dsrLimit = getDsrLimit(income, calcInterest, termYears);
-    const maxLoan = Math.min(ltvLimit, dsrLimit);
+    let maxLoan = Math.min(ltvLimit, dsrLimit);
+
+    // [추가] 15억 초과 시 주담대 6억 제한 (사용자 요청 규제)
+    if (price >= 150000) {
+        maxLoan = Math.min(maxLoan, 60000);
+    }
+    
     const finalCash1 = price - maxLoan + totalIncidentalFee;
     
     // 월 예상 상환액 계산 (상환 방식 옵션 반영)

@@ -33,6 +33,12 @@
             </div>
 
             <div>
+                <label class="block text-sm font-semibold mb-1">주택담보대출 금리 (%)</label>
+                <input type="number" id="input-interest" step="0.1" class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all" placeholder="예: 4.2" value="4.2">
+                <div class="text-xs text-slate-400 mt-1 text-right">* 스트레스 금리 별도 가산</div>
+            </div>
+
+            <div>
                 <label class="block text-sm font-semibold mb-1">지역 규제</label>
                 <div class="flex gap-2">
                     <label class="flex-1 cursor-pointer">
@@ -41,7 +47,7 @@
                     </label>
                     <label class="flex-1 cursor-pointer">
                         <input type="radio" name="regulation" value="true" class="peer hidden">
-                        <div class="text-center py-2 border rounded-lg peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 font-medium text-sm transition-all">규제지역 (강남3구/용산)</div>
+                        <div class="text-center py-2 border rounded-lg peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 font-medium text-sm transition-all">규제지역</div>
                     </label>
                 </div>
             </div>
@@ -100,6 +106,7 @@
                     <div class="mt-2 text-xs text-slate-500 space-y-1">
                         <div class="flex justify-between"><span>LTV 한도:</span> <span id="out-ltv-limit" class="font-medium text-slate-700">0원</span></div>
                         <div class="flex justify-between"><span>DSR 한도 (스트레스 3단계):</span> <span id="out-dsr-limit" class="font-medium text-slate-700">0원</span></div>
+                        <div class="flex justify-between font-bold text-blue-600 pt-1 border-t"><span>DSR 계산 금리:</span> <span id="out-calc-rate">0.0%</span></div>
                     </div>
                 </div>
                 
@@ -174,10 +181,10 @@ const CONSTANTS = {
     // 대출 관련 상수 (2026년 스트레스 DSR 3단계 기준 등 반영)
     LOAN: {
         DSR_LIMIT: 0.4,           // DSR 40%
-        DSR_INTEREST_RATE: 0.05,  // 산정 금리 5.0%
+        STRESS_RATE: 0.012,       // 스트레스 금리 1.2% (Phase 3 예상)
         DSR_TERM_YEARS: 40,       // 만기 40년
         LTV: {
-            REGULATED: { 0: 0.5, 1: 0.4, 2: 0.0 },     // 강남3구, 용산 (무주택, 1주택, 다주택)
+            REGULATED: { 0: 0.5, 1: 0.4, 2: 0.0 },     // 규제 (무주택, 1주택, 다주택)
             NON_REGULATED: { 0: 0.7, 1: 0.6, 2: 0.3 }  // 비규제 (무주택, 1주택, 다주택)
         }
     },
@@ -312,11 +319,11 @@ function calculatePMT(rate, nper, pv) {
 }
 
 // DSR 기반 최대 대출액
-function getDsrLimit(income) {
+function getDsrLimit(income, calcRate) {
     if (income <= 0) return 0;
     
     const maxYearlyPayment = income * CONSTANTS.LOAN.DSR_LIMIT;
-    const monthlyRate = CONSTANTS.LOAN.DSR_INTEREST_RATE / 12;
+    const monthlyRate = calcRate / 12;
     const totalMonths = CONSTANTS.LOAN.DSR_TERM_YEARS * 12;
 
     // 대출원금 = 월납입액 / (r*(1+r)^n / ((1+r)^n - 1))
@@ -347,6 +354,7 @@ function updateDashboard() {
     const price = getDOMValue('input-price');
     const jeonse = getDOMValue('input-jeonse');
     const income = getDOMValue('input-income');
+    const baseInterest = getDOMValue('input-interest') / 100;
     const isRegulated = getRadioValue('regulation') === 'true';
     const homes = parseInt(getRadioValue('homes'), 10);
     const isLarge = getRadioValue('area') === 'large';
@@ -355,6 +363,10 @@ function updateDashboard() {
     document.getElementById('disp-price').innerText = formatMoney(price);
     document.getElementById('disp-jeonse').innerText = formatMoney(jeonse);
     document.getElementById('disp-income').innerText = formatMoney(income);
+
+    // DSR 계산 금리 (입력 금리 + 스트레스 금리)
+    const calcInterest = baseInterest + CONSTANTS.LOAN.STRESS_RATE;
+    document.getElementById('out-calc-rate').innerText = `${(calcInterest * 100).toFixed(2)}% (스트레스 포함)`;
 
     // 에러 핸들링 (전세가 > 매매가)
     const errorMsg = document.getElementById('error-msg');
@@ -384,7 +396,7 @@ function updateDashboard() {
 
     // 3. 시나리오 1 산출 (실거주)
     const ltvLimit = getLtvLimit(price, isRegulated, homes);
-    const dsrLimit = getDsrLimit(income);
+    const dsrLimit = getDsrLimit(income, calcInterest);
     const maxLoan = Math.min(ltvLimit, dsrLimit);
     const finalCash1 = price - maxLoan + totalIncidentalFee;
 

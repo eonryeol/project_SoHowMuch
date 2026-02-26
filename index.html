@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>아파트 매수 필요 현금 계산기</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased">
+
+<div class="max-w-7xl mx-auto p-4 md:p-8 flex flex-col lg:flex-row gap-6">
+    
+    <div class="w-full lg:w-1/3 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 h-fit">
+        <h2 class="text-xl font-bold mb-6 text-slate-900 border-b pb-2">매수 조건 입력</h2>
+        
+        <div class="space-y-5">
+            <div>
+                <label class="block text-sm font-semibold mb-1">매매가 (만 원)</label>
+                <input type="number" id="input-price" class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all" placeholder="예: 100000 (10억)" value="100000">
+                <div id="disp-price" class="text-xs text-blue-600 mt-1 font-medium text-right">10억 0만 원</div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold mb-1">전세가 (만 원)</label>
+                <input type="number" id="input-jeonse" class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all" placeholder="예: 60000 (6억)" value="60000">
+                <div id="disp-jeonse" class="text-xs text-blue-600 mt-1 font-medium text-right">6억 0만 원</div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold mb-1">연봉 (만 원)</label>
+                <input type="number" id="input-income" class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all" placeholder="예: 8000 (8천만 원)" value="8000">
+                <div id="disp-income" class="text-xs text-blue-600 mt-1 font-medium text-right">8,000만 원</div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold mb-1">지역 규제</label>
+                <div class="flex gap-2">
+                    <label class="flex-1 cursor-pointer">
+                        <input type="radio" name="regulation" value="false" class="peer hidden" checked>
+                        <div class="text-center py-2 border rounded-lg peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 font-medium text-sm transition-all">비규제지역</div>
+                    </label>
+                    <label class="flex-1 cursor-pointer">
+                        <input type="radio" name="regulation" value="true" class="peer hidden">
+                        <div class="text-center py-2 border rounded-lg peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 font-medium text-sm transition-all">규제지역 (강남3구/용산)</div>
+                    </label>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold mb-1">주택 보유 수 (매수 후 기준)</label>
+                <div class="flex gap-2">
+                    <label class="flex-1 cursor-pointer">
+                        <input type="radio" name="homes" value="0" class="peer hidden" checked>
+                        <div class="text-center py-2 border rounded-lg peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 font-medium text-sm transition-all">무주택</div>
+                    </label>
+                    <label class="flex-1 cursor-pointer">
+                        <input type="radio" name="homes" value="1" class="peer hidden">
+                        <div class="text-center py-2 border rounded-lg peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 font-medium text-sm transition-all">1주택</div>
+                    </label>
+                    <label class="flex-1 cursor-pointer">
+                        <input type="radio" name="homes" value="2" class="peer hidden">
+                        <div class="text-center py-2 border rounded-lg peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 font-medium text-sm transition-all">다주택(2+)</div>
+                    </label>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold mb-1">전용 면적</label>
+                <div class="flex gap-2">
+                    <label class="flex-1 cursor-pointer">
+                        <input type="radio" name="area" value="small" class="peer hidden" checked>
+                        <div class="text-center py-2 border rounded-lg peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 font-medium text-sm transition-all">85㎡ 이하</div>
+                    </label>
+                    <label class="flex-1 cursor-pointer">
+                        <input type="radio" name="area" value="large" class="peer hidden">
+                        <div class="text-center py-2 border rounded-lg peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 font-medium text-sm transition-all">85㎡ 초과</div>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="w-full lg:w-2/3 space-y-6">
+        
+        <div id="error-msg" class="hidden bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-sm font-medium">
+            전세가가 매매가보다 높습니다. 입력값을 확인하세요.
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 overflow-hidden relative">
+            <div class="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
+            <h2 class="text-2xl font-bold mb-4 text-slate-900 flex items-center justify-between">
+                <span>시나리오 1: 실거주 매수 (주담대 활용)</span>
+                <span class="text-sm font-normal text-slate-500 bg-slate-100 px-3 py-1 rounded-full">DSR 40% 적용</span>
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <div class="text-sm text-slate-500 mb-1">최대 대출 가능액 <span class="text-xs">(Min(LTV, DSR))</span></div>
+                    <div id="out-loan-max" class="text-2xl font-bold text-slate-800">0원</div>
+                    <div class="mt-2 text-xs text-slate-500 space-y-1">
+                        <div class="flex justify-between"><span>LTV 한도:</span> <span id="out-ltv-limit" class="font-medium text-slate-700">0원</span></div>
+                        <div class="flex justify-between"><span>DSR 한도 (스트레스 3단계):</span> <span id="out-dsr-limit" class="font-medium text-slate-700">0원</span></div>
+                    </div>
+                </div>
+                
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <div class="text-sm text-slate-500 mb-1">총 부대비용</div>
+                    <div id="out-fee-total-1" class="text-2xl font-bold text-slate-800">0원</div>
+                    <details class="mt-2 text-xs text-slate-500 cursor-pointer">
+                        <summary class="font-medium text-blue-600 outline-none">상세 내역 보기</summary>
+                        <div class="mt-2 space-y-1 bg-white p-3 border rounded shadow-sm">
+                            <div class="flex justify-between"><span>취득세 등:</span> <span id="dtl-tax-1">0원</span></div>
+                            <div class="flex justify-between"><span>중개수수료(VAT포함):</span> <span id="dtl-broker-1">0원</span></div>
+                            <div class="flex justify-between"><span>국민주택채권할인:</span> <span id="dtl-bond-1">0원</span></div>
+                            <div class="flex justify-between"><span>수입인지대:</span> <span id="dtl-stamp-1">0원</span></div>
+                            <div class="flex justify-between"><span>법무사비용(추정):</span> <span id="dtl-legal-1">0원</span></div>
+                        </div>
+                    </details>
+                </div>
+            </div>
+
+            <div class="bg-blue-50 border border-blue-100 p-5 rounded-xl flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="text-blue-800 font-semibold text-lg">최종 필요 현금 (매매가 - 대출금 + 부대비용)</div>
+                <div id="out-final-cash-1" class="text-3xl font-extrabold text-blue-700 tracking-tight">0원</div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 overflow-hidden relative">
+            <div class="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
+            <h2 class="text-2xl font-bold mb-4 text-slate-900 flex items-center justify-between">
+                <span>시나리오 2: 갭 투자 매수 (전세 승계)</span>
+                <span id="out-jeonse-rate" class="text-sm font-bold text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full">전세가율 0%</span>
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <div class="text-sm text-slate-500 mb-1">갭 금액 (매매가 - 전세가)</div>
+                    <div id="out-gap-amount" class="text-2xl font-bold text-slate-800">0원</div>
+                </div>
+                
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <div class="text-sm text-slate-500 mb-1">총 부대비용</div>
+                    <div id="out-fee-total-2" class="text-2xl font-bold text-slate-800">0원</div>
+                    <details class="mt-2 text-xs text-slate-500 cursor-pointer">
+                        <summary class="font-medium text-emerald-600 outline-none">상세 내역 보기</summary>
+                        <div class="mt-2 space-y-1 bg-white p-3 border rounded shadow-sm">
+                            <div class="flex justify-between"><span>취득세 등:</span> <span id="dtl-tax-2">0원</span></div>
+                            <div class="flex justify-between"><span>중개수수료(VAT포함):</span> <span id="dtl-broker-2">0원</span></div>
+                            <div class="flex justify-between"><span>국민주택채권할인:</span> <span id="dtl-bond-2">0원</span></div>
+                            <div class="flex justify-between"><span>수입인지대:</span> <span id="dtl-stamp-2">0원</span></div>
+                            <div class="flex justify-between"><span>법무사비용(추정):</span> <span id="dtl-legal-2">0원</span></div>
+                        </div>
+                    </details>
+                </div>
+            </div>
+
+            <div class="bg-emerald-50 border border-emerald-100 p-5 rounded-xl flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="text-emerald-800 font-semibold text-lg">최종 필요 현금 (갭 금액 + 부대비용)</div>
+                <div id="out-final-cash-2" class="text-3xl font-extrabold text-emerald-700 tracking-tight">0원</div>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+<script>
+/**
+ * ==========================================
+ * [내부 상수 설정]
+ * 유지보수를 위해 변동 가능성이 있는 수치들을 상단에 분리
+ * ==========================================
+ */
+const CONSTANTS = {
+    // 대출 관련 상수 (2026년 스트레스 DSR 3단계 기준 등 반영)
+    LOAN: {
+        DSR_LIMIT: 0.4,           // DSR 40%
+        DSR_INTEREST_RATE: 0.05,  // 산정 금리 5.0%
+        DSR_TERM_YEARS: 40,       // 만기 40년
+        LTV: {
+            REGULATED: { 0: 0.5, 1: 0.4, 2: 0.0 },     // 강남3구, 용산 (무주택, 1주택, 다주택)
+            NON_REGULATED: { 0: 0.7, 1: 0.6, 2: 0.3 }  // 비규제 (무주택, 1주택, 다주택)
+        }
+    },
+    // 부대비용 상수
+    FEE: {
+        BOND_MARKET_RATIO: 0.6,       // 시가표준액 = 매매가의 60% 가정
+        BOND_BUY_RATIO: 0.021,        // 채권 매입 비율 (약 2.1%)
+        BOND_DISCOUNT_RATE: 0.10,     // 채권 할인율 (10% 러프하게 고정)
+        LEGAL_BASE_FEE: 15,           // 법무사 기본 보수액 (만 원)
+        LEGAL_AGENCY_FEE: 15,         // 대행 수수료 등 추정치 (만 원)
+        LEGAL_PROGRESSIVE_RATE: 0.0008 // 누진 보수 요율 (대략적인 산식)
+    }
+};
+
+/**
+ * ==========================================
+ * [유틸리티 함수]
+ * ==========================================
+ */
+// 만 원 단위를 억, 만 원으로 포맷팅
+function formatMoney(manWon) {
+    if (isNaN(manWon) || manWon <= 0) return '0원';
+    
+    const amount = Math.floor(manWon);
+    const uk = Math.floor(amount / 10000);
+    const man = amount % 10000;
+    
+    let result = '';
+    if (uk > 0) {
+        result += `${uk.toLocaleString()}억 `;
+    }
+    if (man > 0 || uk === 0) {
+        result += `${man.toLocaleString()}만 `;
+    }
+    return result.trim() + '원';
+}
+
+function getDOMValue(id) {
+    return Number(document.getElementById(id).value) || 0;
+}
+
+function getRadioValue(name) {
+    const el = document.querySelector(`input[name="${name}"]:checked`);
+    return el ? el.value : null;
+}
+
+/**
+ * ==========================================
+ * [부대비용 계산 로직]
+ * ==========================================
+ */
+// 1. 취득세 (+지방교육세, 농어촌특별세) 산출
+function calculateTax(price, isRegulated, homes, isLarge) {
+    let rate = 0;
+    let eduRate = 0;
+    let ruralRate = isLarge ? 0.002 : 0; // 85초과면 농특세 0.2% 추가
+
+    // 다주택자 중과세율 적용 (2026년 현행 기준 단순화)
+    if (homes >= 2) {
+        if (isRegulated) {
+            rate = 0.12; // 규제 3주택 이상 또는 규제 2주택 등 극단적 단순화 (실무상 8% or 12%)
+            if (homes == 1) rate = 0.08; // 입력폼상 homes 2는 2주택 이상. 1주택상태에서 매수면 2주택 8%
+        } else {
+            rate = 0.08; // 비규제 3주택 8%, 4주택 12%
+        }
+        eduRate = 0.004; // 중과 시 교육세 0.4%
+    } else {
+        // 1주택자 (무주택에서 1주택 됨)
+        if (price <= 60000) {
+            rate = 0.01;
+            eduRate = 0.001;
+        } else if (price <= 90000) {
+            // 6억 ~ 9억: (매매가(억) * 2 / 3 - 3) * 1%
+            const priceUk = price / 10000;
+            rate = (priceUk * (2/3) - 3) / 100;
+            eduRate = rate * 0.1; // 취득세율의 10%
+        } else {
+            rate = 0.03;
+            eduRate = 0.003;
+        }
+    }
+
+    const totalRate = rate + eduRate + ruralRate;
+    return Math.floor(price * totalRate);
+}
+
+// 2. 중개수수료 산출 (법정 상한요율 적용 + VAT 10%)
+function calculateBrokerFee(price) {
+    let rate = 0;
+    if (price < 20000) rate = 0.005; // 한도액 로직은 간소화
+    else if (price < 90000) rate = 0.004;
+    else if (price < 120000) rate = 0.005;
+    else if (price < 150000) rate = 0.006;
+    else rate = 0.007;
+
+    const baseFee = price * rate;
+    const vat = baseFee * 0.1;
+    return Math.floor(baseFee + vat);
+}
+
+// 3. 국민주택채권 할인액 (즉시 매도 시)
+function calculateBondDiscount(price) {
+    const marketVal = price * CONSTANTS.FEE.BOND_MARKET_RATIO;
+    const buyVal = marketVal * CONSTANTS.FEE.BOND_BUY_RATIO;
+    return Math.floor(buyVal * CONSTANTS.FEE.BOND_DISCOUNT_RATE);
+}
+
+// 4. 수입인지대
+function calculateStampDuty(price) {
+    if (price > 100000) return 35; // 10억 초과 35만 원
+    if (price >= 10000) return 15; // 1억~10억 15만 원
+    return 0;
+}
+
+// 5. 법무사 비용 (추정)
+function calculateLegalFee(price) {
+    const base = CONSTANTS.FEE.LEGAL_BASE_FEE;
+    const prog = price * CONSTANTS.FEE.LEGAL_PROGRESSIVE_RATE;
+    const agency = CONSTANTS.FEE.LEGAL_AGENCY_FEE;
+    return Math.floor(base + prog + agency);
+}
+
+/**
+ * ==========================================
+ * [대출 계산 로직]
+ * ==========================================
+ */
+// PMT 함수 (원리금균등상환액 산출) -> DSR 역산용
+function calculatePMT(rate, nper, pv) {
+    if (rate === 0) return pv / nper;
+    return (pv * rate * Math.pow(1 + rate, nper)) / (Math.pow(1 + rate, nper) - 1);
+}
+
+// DSR 기반 최대 대출액
+function getDsrLimit(income) {
+    if (income <= 0) return 0;
+    
+    const maxYearlyPayment = income * CONSTANTS.LOAN.DSR_LIMIT;
+    const monthlyRate = CONSTANTS.LOAN.DSR_INTEREST_RATE / 12;
+    const totalMonths = CONSTANTS.LOAN.DSR_TERM_YEARS * 12;
+
+    // 대출원금 = 월납입액 / (r*(1+r)^n / ((1+r)^n - 1))
+    const maxMonthlyPayment = maxYearlyPayment / 12;
+    const maxLoan = maxMonthlyPayment * ((Math.pow(1 + monthlyRate, totalMonths) - 1) / (monthlyRate * Math.pow(1 + monthlyRate, totalMonths)));
+    
+    return Math.floor(maxLoan);
+}
+
+// LTV 기반 최대 대출액
+function getLtvLimit(price, isRegulated, homes) {
+    let ltvRate = 0;
+    if (isRegulated) {
+        ltvRate = CONSTANTS.LOAN.LTV.REGULATED[homes];
+    } else {
+        ltvRate = CONSTANTS.LOAN.LTV.NON_REGULATED[homes];
+    }
+    return Math.floor(price * ltvRate);
+}
+
+/**
+ * ==========================================
+ * [메인 업데이트 함수]
+ * ==========================================
+ */
+function updateDashboard() {
+    // 1. 값 가져오기
+    const price = getDOMValue('input-price');
+    const jeonse = getDOMValue('input-jeonse');
+    const income = getDOMValue('input-income');
+    const isRegulated = getRadioValue('regulation') === 'true';
+    const homes = parseInt(getRadioValue('homes'), 10);
+    const isLarge = getRadioValue('area') === 'large';
+
+    // 입력값 텍스트 실시간 반영
+    document.getElementById('disp-price').innerText = formatMoney(price);
+    document.getElementById('disp-jeonse').innerText = formatMoney(jeonse);
+    document.getElementById('disp-income').innerText = formatMoney(income);
+
+    // 에러 핸들링 (전세가 > 매매가)
+    const errorMsg = document.getElementById('error-msg');
+    if (jeonse > price) {
+        errorMsg.classList.remove('hidden');
+    } else {
+        errorMsg.classList.add('hidden');
+    }
+
+    // 2. 부대비용 공통 산출
+    const tax = calculateTax(price, isRegulated, homes, isLarge);
+    const broker = calculateBrokerFee(price);
+    const bond = calculateBondDiscount(price);
+    const stamp = calculateStampDuty(price);
+    const legal = calculateLegalFee(price);
+    const totalIncidentalFee = tax + broker + bond + stamp + legal;
+
+    // 부대비용 DOM 업데이트 (시나리오 1, 2 공통)
+    [1, 2].forEach(num => {
+        document.getElementById(`dtl-tax-${num}`).innerText = formatMoney(tax);
+        document.getElementById(`dtl-broker-${num}`).innerText = formatMoney(broker);
+        document.getElementById(`dtl-bond-${num}`).innerText = formatMoney(bond);
+        document.getElementById(`dtl-stamp-${num}`).innerText = formatMoney(stamp);
+        document.getElementById(`dtl-legal-${num}`).innerText = formatMoney(legal);
+        document.getElementById(`out-fee-total-${num}`).innerText = formatMoney(totalIncidentalFee);
+    });
+
+    // 3. 시나리오 1 산출 (실거주)
+    const ltvLimit = getLtvLimit(price, isRegulated, homes);
+    const dsrLimit = getDsrLimit(income);
+    const maxLoan = Math.min(ltvLimit, dsrLimit);
+    const finalCash1 = price - maxLoan + totalIncidentalFee;
+
+    document.getElementById('out-ltv-limit').innerText = formatMoney(ltvLimit);
+    document.getElementById('out-dsr-limit').innerText = formatMoney(dsrLimit);
+    document.getElementById('out-loan-max').innerText = formatMoney(maxLoan);
+    
+    // 시나리오 1의 최종 필요 현금이 음수가 되는 등 비정상적일 때 방어 로직 (이론상 대출이 매매가를 넘진 않으나 부대비용 제외시)
+    document.getElementById('out-final-cash-1').innerText = formatMoney(Math.max(0, finalCash1));
+
+    // 4. 시나리오 2 산출 (갭 투자)
+    const gapAmount = price - jeonse;
+    const jeonseRate = price > 0 ? ((jeonse / price) * 100).toFixed(1) : 0;
+    const finalCash2 = gapAmount + totalIncidentalFee;
+
+    document.getElementById('out-gap-amount').innerText = formatMoney(gapAmount);
+    document.getElementById('out-jeonse-rate').innerText = `전세가율 ${jeonseRate}%`;
+    document.getElementById('out-final-cash-2').innerText = formatMoney(Math.max(0, finalCash2));
+}
+
+/**
+ * ==========================================
+ * [이벤트 리스너 바인딩]
+ * ==========================================
+ */
+document.addEventListener('DOMContentLoaded', () => {
+    // 모든 input, radio 변경 시 실시간 업데이트 트리거
+    const inputs = document.querySelectorAll('input');
+    inputs.forEach(input => {
+        input.addEventListener('input', updateDashboard);
+        input.addEventListener('change', updateDashboard);
+    });
+
+    // 초기 로드 시 1회 실행
+    updateDashboard();
+});
+
+</script>
+</body>
+</html>

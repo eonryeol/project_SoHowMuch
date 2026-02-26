@@ -76,6 +76,24 @@
             <div class="text-xs text-slate-400 dark:text-slate-500 text-right -mt-4">* 스트레스 금리 별도 가산</div>
 
             <div>
+                <label class="block text-sm font-semibold mb-1">상환 방법</label>
+                <div class="grid grid-cols-1 gap-2">
+                    <label class="flex items-center gap-3 cursor-pointer p-2 border dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                        <input type="radio" name="repayment" value="equal-total" class="w-4 h-4 text-blue-600 focus:ring-blue-500" checked>
+                        <span class="text-sm text-slate-700 dark:text-slate-300 font-medium">원리금균등 <span class="text-[10px] font-normal text-slate-400">(매달 같은 금액)</span></span>
+                    </label>
+                    <label class="flex items-center gap-3 cursor-pointer p-2 border dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                        <input type="radio" name="repayment" value="equal-principal" class="w-4 h-4 text-blue-600 focus:ring-blue-500">
+                        <span class="text-sm text-slate-700 dark:text-slate-300 font-medium">원금균등 <span class="text-[10px] font-normal text-slate-400">(원금 일정, 이자 감소)</span></span>
+                    </label>
+                    <label class="flex items-center gap-3 cursor-pointer p-2 border dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                        <input type="radio" name="repayment" value="grace" class="w-4 h-4 text-blue-600 focus:ring-blue-500">
+                        <span class="text-sm text-slate-700 dark:text-slate-300 font-medium">거치식 <span class="text-[10px] font-normal text-slate-400">(초기 이자만 납부)</span></span>
+                    </label>
+                </div>
+            </div>
+
+            <div>
                 <label class="block text-sm font-semibold mb-1">지역 규제</label>
                 <div class="flex gap-2">
                     <label class="flex-1 cursor-pointer">
@@ -520,16 +538,31 @@ function updateDashboard() {
     const maxLoan = Math.min(ltvLimit, dsrLimit);
     const finalCash1 = price - maxLoan + totalIncidentalFee;
     
-    // 월 예상 상환액 계산 (실제 입력된 금리 기준, 스트레스 금리 미포함)
+    // 월 예상 상환액 계산 (상환 방식 옵션 반영)
+    const repaymentMethod = getRadioValue('repayment');
+    let monthlyPaymentManWon = 0;
+    let paymentSuffix = "";
+
     const actualMonthlyRate = baseInterest / 12;
     const totalMonths = termYears * 12;
-    // maxLoan 단위가 만원 이므로, 결과도 만원 단위로 나옴.
-    const monthlyPaymentManWon = calculatePMT(actualMonthlyRate, totalMonths, maxLoan);
+
+    if (repaymentMethod === 'equal-total') {
+        monthlyPaymentManWon = calculatePMT(actualMonthlyRate, totalMonths, maxLoan);
+    } else if (repaymentMethod === 'equal-principal') {
+        const monthlyPrincipal = maxLoan / totalMonths;
+        const firstMonthInterest = maxLoan * actualMonthlyRate;
+        monthlyPaymentManWon = monthlyPrincipal + firstMonthInterest;
+        paymentSuffix = " (첫 달 기준)";
+    } else if (repaymentMethod === 'grace') {
+        // 거치 기간 중에는 이자만 납입 (거치 기간은 1년으로 가정하거나 단순히 이자액 표시)
+        monthlyPaymentManWon = maxLoan * actualMonthlyRate;
+        paymentSuffix = " (거치 기간 중)";
+    }
 
     document.getElementById('out-ltv-limit').innerText = formatMoney(ltvLimit);
     document.getElementById('out-dsr-limit').innerText = formatMoney(dsrLimit);
     document.getElementById('out-loan-max').innerText = formatMoney(maxLoan);
-    document.getElementById('out-monthly-payment').innerText = `약 ${Math.floor(monthlyPaymentManWon).toLocaleString()}만 원`;
+    document.getElementById('out-monthly-payment').innerText = `약 ${Math.floor(monthlyPaymentManWon).toLocaleString()}만 원${paymentSuffix}`;
     
     // 시나리오 1의 최종 필요 현금이 음수가 되는 등 비정상적일 때 방어 로직
     document.getElementById('out-final-cash-1').innerText = formatMoney(Math.max(0, finalCash1));

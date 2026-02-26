@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>내돈얼마 - 아파트 매수 필요 현금 계산기</title>
+    <title>내돈얼마 - 아파트 매수 필요 현금 & 대출 DSR 계산기</title>
+    <meta name="description" content="아파트 매수 시 필요한 현금, 취득세, 중개수수료, 주담대 LTV 및 DSR 한도를 한눈에 계산해 보세요. 내 집 마련을 위한 필수 부동산 계산기 '내돈얼마'입니다.">
+    <meta name="keywords" content="부동산 계산기, 아파트 매수, 내집마련, DSR 계산기, LTV 계산기, 취득세 계산기, 갭투자 계산기, 내돈얼마">
+    <meta property="og:title" content="내돈얼마 - 내 집 마련 필수 현금 계산기">
+    <meta property="og:description" content="매매가와 연봉만 입력하면 대출 한도와 필요 현금을 즉시 확인하세요.">
+    <meta property="og:type" content="website">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
     <script>
@@ -205,9 +210,55 @@
                 <div id="out-final-cash-2" class="text-3xl font-extrabold text-emerald-700 dark:text-emerald-400 tracking-tight">0원</div>
             </div>
         </div>
+
+        <!-- SEO 및 콘텐츠 보강: 가이드 & FAQ -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 transition-colors">
+                <h3 class="text-lg font-bold mb-4 text-slate-900 dark:text-white flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    내 집 마련 핵심 가이드
+                </h3>
+                <div class="space-y-4 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                    <p><strong>1. LTV(주택담보대출비율)란?</strong><br>주택 가격 대비 대출 가능한 비율입니다. 비규제지역 무주택자의 경우 최대 70%까지 가능합니다.</p>
+                    <p><strong>2. DSR(총부채원리금상환비율)이란?</strong><br>연 소득 대비 모든 부채의 원리금 상환액 비율입니다. 현재 1금융권 기준 40%가 상한선입니다.</p>
+                    <p><strong>3. 스트레스 DSR이란?</strong><br>향후 금리 인상 가능성을 고려해 가산 금리를 적용하여 대출 한도를 산정하는 제도입니다. 한도가 줄어드는 효과가 있습니다.</p>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 transition-colors">
+                <h3 class="text-lg font-bold mb-4 text-slate-900 dark:text-white flex items-center gap-2">
+                    <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.443 1.103m-3.13 0a1.5 1.5 0 113 0m-3 0a1.5 1.5 0 10-3 0M3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+                    자주 묻는 질문 (FAQ)
+                </h3>
+                <div class="space-y-4 text-sm text-slate-600 dark:text-slate-400">
+                    <details class="cursor-pointer group">
+                        <summary class="font-semibold text-slate-800 dark:text-slate-200 group-hover:text-blue-500 transition-colors">계산 결과가 정확한가요?</summary>
+                        <p class="mt-2 pl-4 border-l-2 border-slate-200 dark:border-slate-700">본 계산기는 대략적인 참고용입니다. 실제 은행 상담 결과와 차이가 있을 수 있습니다.</p>
+                    </details>
+                    <details class="cursor-pointer group">
+                        <summary class="font-semibold text-slate-800 dark:text-slate-200 group-hover:text-blue-500 transition-colors">부대비용에는 어떤 것들이 포함되나요?</summary>
+                        <p class="mt-2 pl-4 border-l-2 border-slate-200 dark:border-slate-700">취득세, 지방교육세, 농특세, 중개보수, 채권 할인료, 수입인지대, 법무사 대행 수수료 등이 포함됩니다.</p>
+                    </details>
+                </div>
+            </div>
+        </div>
         
     </div>
 </div>
+
+<footer class="w-full bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 py-8 mt-12 transition-colors duration-200">
+    <div class="max-w-7xl mx-auto px-4 text-center">
+        <p class="text-slate-500 dark:text-slate-400 text-sm mb-4">© 2026 내돈얼마. All rights reserved.</p>
+        <div class="flex justify-center gap-6 text-xs text-slate-400 dark:text-slate-500">
+            <a href="#" class="hover:text-blue-500 underline transition-colors">이용약관</a>
+            <a href="#" class="hover:text-blue-500 underline transition-colors">개인정보처리방침</a>
+            <a href="mailto:support@example.com" class="hover:text-blue-500 underline transition-colors">문의하기</a>
+        </div>
+        <p class="mt-6 text-[10px] text-slate-300 dark:text-slate-600 max-w-2xl mx-auto leading-relaxed">
+            주의: 본 사이트의 모든 계산 결과는 관련 법규와 통계에 기초한 추정치로, 실제 금융 거래 및 세금 고지 결과와 상이할 수 있습니다. 정확한 금액은 반드시 전문가와 상담하시기 바랍니다.
+        </p>
+    </div>
+</footer>
 
 <script>
 /**

@@ -138,6 +138,16 @@
                     </label>
                 </div>
             </div>
+
+            <div class="pt-2">
+                <label class="flex items-center gap-3 cursor-pointer p-3 bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
+                    <input type="checkbox" id="input-first-home" class="w-5 h-5 text-blue-600 rounded-md focus:ring-blue-500 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700">
+                    <div>
+                        <span class="block text-sm font-bold text-blue-800 dark:text-blue-300">생애최초 주택 구매</span>
+                        <span class="block text-[10px] text-blue-600 dark:text-blue-400 font-medium">LTV 70% 우대 금리 적용 가능 여부</span>
+                    </div>
+                </label>
+            </div>
         </div>
     </div>
 
@@ -186,11 +196,38 @@
                 <div id="out-final-cash-1" class="text-3xl font-extrabold text-blue-700 dark:text-blue-400 tracking-tight">0원</div>
             </div>
 
-            <div class="bg-slate-50 dark:bg-slate-700/50 p-4 rounded-xl border border-slate-100 dark:border-slate-600 flex justify-between items-center transition-colors">
-                <div>
-                    <div class="text-sm font-semibold text-slate-700 dark:text-slate-300">월 예상 상환액 <span class="text-xs font-normal text-slate-500 dark:text-slate-400">(원리금균등, 실제 금리 기준)</span></div>
+            <div class="bg-slate-50 dark:bg-slate-700/50 p-4 rounded-xl border border-slate-100 dark:border-slate-600 transition-colors">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <div class="text-sm font-semibold text-slate-700 dark:text-slate-300">월 예상 상환액 <span class="text-xs font-normal text-slate-500 dark:text-slate-400"></span></div>
+                    </div>
+                    <div id="out-monthly-payment" class="text-xl font-bold text-slate-800 dark:text-slate-100">0원</div>
                 </div>
-                <div id="out-monthly-payment" class="text-xl font-bold text-slate-800 dark:text-slate-100">0원</div>
+
+                <button id="toggle-schedule" class="mt-3 w-full flex items-center justify-center gap-1 text-xs text-slate-500 hover:text-blue-500 transition-colors py-1 border-t border-dashed border-slate-200 dark:border-slate-600">
+                    상세 상환 스케줄 보기
+                    <svg id="schedule-arrow" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+
+                <div id="schedule-container" class="hidden mt-4 overflow-hidden transition-all">
+                    <div class="max-h-80 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-600">
+                        <table class="w-full text-[11px] text-left border-collapse">
+                            <thead class="sticky top-0 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                                <tr>
+                                    <th class="p-2 border-b dark:border-slate-600">회차</th>
+                                    <th class="p-2 border-b dark:border-slate-600 text-right">상환금</th>
+                                    <th class="p-2 border-b dark:border-slate-600 text-right">원금</th>
+                                    <th class="p-2 border-b dark:border-slate-600 text-right">이자</th>
+                                    <th class="p-2 border-b dark:border-slate-600 text-right">잔액</th>
+                                </tr>
+                            </thead>
+                            <tbody id="schedule-body" class="divide-y divide-slate-100 dark:divide-slate-700 text-slate-500 dark:text-slate-400">
+                                <!-- JS content -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-[10px] text-slate-400 mt-2 text-center">* 위 스케줄은 단순 참고용이며 실제와 다를 수 있습니다.</div>
+                </div>
             </div>
         </div>
 
@@ -455,6 +492,54 @@ function calculatePMT(rate, nper, pv) {
     return (pv * rate * Math.pow(1 + rate, nper)) / (Math.pow(1 + rate, nper) - 1);
 }
 
+function generateAmortizationSchedule(loanAmount, annualRate, totalMonths, method) {
+    const tbody = document.getElementById('schedule-body');
+    const scheduleContainer = document.getElementById('schedule-container');
+    
+    if (loanAmount <= 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center">대출액이 없습니다.</td></tr>';
+        return;
+    }
+
+    const monthlyRate = annualRate / 12;
+    let balance = loanAmount;
+    let rows = '';
+
+    // 너무 많은 데이터 방지를 위해 최대 600회까지만 표시
+    for (let month = 1; month <= Math.min(totalMonths, 600); month++) {
+        let interest = balance * monthlyRate;
+        let principal = 0;
+        let payment = 0;
+
+        if (method === 'equal-total') {
+            payment = calculatePMT(monthlyRate, totalMonths, loanAmount);
+            principal = payment - interest;
+        } else if (method === 'equal-principal') {
+            principal = loanAmount / totalMonths;
+            payment = principal + interest;
+        } else if (method === 'grace') {
+            principal = 0;
+            payment = interest;
+        }
+
+        balance -= principal;
+        if (balance < 0.01) balance = 0;
+
+        rows += `
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                <td class="p-2 font-medium">${month}회</td>
+                <td class="p-2 text-right">${Math.floor(payment).toLocaleString()}</td>
+                <td class="p-2 text-right">${Math.floor(principal).toLocaleString()}</td>
+                <td class="p-2 text-right">${Math.floor(interest).toLocaleString()}</td>
+                <td class="p-2 text-right">${Math.floor(Math.max(0, balance)).toLocaleString()}</td>
+            </tr>
+        `;
+        
+        if (balance <= 0 && method !== 'grace') break;
+    }
+    tbody.innerHTML = rows;
+}
+
 // DSR 기반 최대 대출액
 function getDsrLimit(income, calcRate, termYears) {
     if (income <= 0 || termYears <= 0) return 0;
@@ -471,9 +556,11 @@ function getDsrLimit(income, calcRate, termYears) {
 }
 
 // LTV 기반 최대 대출액
-function getLtvLimit(price, isRegulated, homes) {
+function getLtvLimit(price, isRegulated, homes, isFirstHome) {
     let ltvRate = 0;
-    if (isRegulated) {
+    if (isFirstHome) {
+        ltvRate = 0.7; // 생애최초 70%
+    } else if (isRegulated) {
         ltvRate = CONSTANTS.LOAN.LTV.REGULATED[homes];
     } else {
         ltvRate = CONSTANTS.LOAN.LTV.NON_REGULATED[homes];
@@ -496,6 +583,7 @@ function updateDashboard() {
     const isRegulated = getRadioValue('regulation') === 'true';
     const homes = parseInt(getRadioValue('homes'), 10);
     const isLarge = getRadioValue('area') === 'large';
+    const isFirstHome = document.getElementById('input-first-home').checked;
 
     // 입력값 텍스트 실시간 반영
     document.getElementById('disp-price').innerText = formatMoney(price);
@@ -533,7 +621,7 @@ function updateDashboard() {
     });
 
     // 3. 시나리오 1 산출 (실거주)
-    const ltvLimit = getLtvLimit(price, isRegulated, homes);
+    const ltvLimit = getLtvLimit(price, isRegulated, homes, isFirstHome);
     const dsrLimit = getDsrLimit(income, calcInterest, termYears);
     const maxLoan = Math.min(ltvLimit, dsrLimit);
     const finalCash1 = price - maxLoan + totalIncidentalFee;
@@ -552,11 +640,10 @@ function updateDashboard() {
         const monthlyPrincipal = maxLoan / totalMonths;
         const firstMonthInterest = maxLoan * actualMonthlyRate;
         monthlyPaymentManWon = monthlyPrincipal + firstMonthInterest;
-        paymentSuffix = " (첫 달 기준)";
+        paymentSuffix = " (첫 달)";
     } else if (repaymentMethod === 'grace') {
-        // 거치 기간 중에는 이자만 납입 (거치 기간은 1년으로 가정하거나 단순히 이자액 표시)
         monthlyPaymentManWon = maxLoan * actualMonthlyRate;
-        paymentSuffix = " (거치 기간 중)";
+        paymentSuffix = " (거치 기간)";
     }
 
     document.getElementById('out-ltv-limit').innerText = formatMoney(ltvLimit);
@@ -566,6 +653,9 @@ function updateDashboard() {
     
     // 시나리오 1의 최종 필요 현금이 음수가 되는 등 비정상적일 때 방어 로직
     document.getElementById('out-final-cash-1').innerText = formatMoney(Math.max(0, finalCash1));
+
+    // 상환 스케줄 업데이트
+    generateAmortizationSchedule(maxLoan, baseInterest, totalMonths, repaymentMethod);
 
     // 4. 시나리오 2 산출 (갭 투자)
     const gapAmount = price - jeonse;
@@ -588,6 +678,24 @@ document.addEventListener('DOMContentLoaded', () => {
     inputs.forEach(input => {
         input.addEventListener('input', updateDashboard);
         input.addEventListener('change', updateDashboard);
+    });
+
+    // 상환 스케줄 토글
+    const toggleBtn = document.getElementById('toggle-schedule');
+    const scheduleContainer = document.getElementById('schedule-container');
+    const scheduleArrow = document.getElementById('schedule-arrow');
+    
+    toggleBtn.addEventListener('click', () => {
+        const isHidden = scheduleContainer.classList.contains('hidden');
+        if (isHidden) {
+            scheduleContainer.classList.remove('hidden');
+            scheduleArrow.classList.add('rotate-180');
+            // 토글 시에만 새로고침 (성능 최적화)
+            updateDashboard();
+        } else {
+            scheduleContainer.classList.add('hidden');
+            scheduleArrow.classList.remove('rotate-180');
+        }
     });
 
     // 초기 로드 시 1회 실행

@@ -44,17 +44,39 @@
     <div class="w-full lg:w-1/3 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 h-fit transition-colors duration-200">
         <h2 class="text-xl font-bold mb-6 text-slate-900 dark:text-slate-100 border-b dark:border-slate-700 pb-2">매수 조건 입력</h2>
         
+        <!-- 계산 모드 토글 -->
+        <div class="flex p-1 bg-slate-100 dark:bg-slate-700 rounded-xl mb-6">
+            <button id="btn-mode-price" class="flex-1 py-2 text-sm font-bold rounded-lg bg-white dark:bg-slate-600 shadow-sm text-blue-600 dark:text-blue-400 transition-all">매매가 기준</button>
+            <button id="btn-mode-cash" class="flex-1 py-2 text-sm font-bold rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-all">보유 현금 기준</button>
+        </div>
+
         <div class="space-y-5">
-            <div>
-                <label class="block text-sm font-semibold mb-1">매매가 (만 원)</label>
-                <input type="number" id="input-price" class="w-full bg-transparent border border-slate-300 dark:border-slate-600 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all dark:text-white" placeholder="예: 100000 (10억)" value="100000">
-                <div id="disp-price" class="text-xs text-blue-600 dark:text-blue-400 mt-1 font-medium text-right">10억 0만 원</div>
+            <!-- 매매가 기준 입력 섹션 -->
+            <div id="section-price-input" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-semibold mb-1">매매가 (만 원)</label>
+                    <input type="number" id="input-price" class="w-full bg-transparent border border-slate-300 dark:border-slate-600 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all dark:text-white" placeholder="예: 100000 (10억)" value="100000">
+                    <div id="disp-price" class="text-xs text-blue-600 dark:text-blue-400 mt-1 font-medium text-right">10억 0만 원</div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold mb-1">전세가 (만 원)</label>
+                    <input type="number" id="input-jeonse" class="w-full bg-transparent border border-slate-300 dark:border-slate-600 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all dark:text-white" placeholder="예: 60000 (6억)" value="60000">
+                    <div id="disp-jeonse" class="text-xs text-blue-600 dark:text-blue-400 mt-1 font-medium text-right">6억 0만 원</div>
+                </div>
             </div>
 
-            <div>
-                <label class="block text-sm font-semibold mb-1">전세가 (만 원)</label>
-                <input type="number" id="input-jeonse" class="w-full bg-transparent border border-slate-300 dark:border-slate-600 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all dark:text-white" placeholder="예: 60000 (6억)" value="60000">
-                <div id="disp-jeonse" class="text-xs text-blue-600 dark:text-blue-400 mt-1 font-medium text-right">6억 0만 원</div>
+            <!-- 보유 현금 기준 입력 섹션 -->
+            <div id="section-cash-input" class="hidden space-y-5">
+                <div>
+                    <label class="block text-sm font-semibold mb-1">보유 현금 (만 원)</label>
+                    <input type="number" id="input-cash" class="w-full bg-transparent border border-slate-300 dark:border-slate-600 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all dark:text-white" placeholder="예: 40000 (4억)" value="40000">
+                    <div id="disp-cash" class="text-xs text-blue-600 dark:text-blue-400 mt-1 font-medium text-right">4억 0만 원</div>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1">희망 전세가율 (%) <span class="text-[10px] font-normal text-slate-400">(갭 투자용)</span></label>
+                    <input type="number" id="input-jeonse-rate" class="w-full bg-transparent border border-slate-300 dark:border-slate-600 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all dark:text-white" placeholder="예: 60" value="60">
+                </div>
             </div>
 
             <div>
@@ -395,6 +417,13 @@ themeToggleBtn.addEventListener('click', function() {
 
 /**
  * ==========================================
+ * [내부 상태 관리]
+ * ==========================================
+ */
+let currentMode = 'price'; // 'price' or 'cash'
+
+/**
+ * ==========================================
  * [내부 상수 설정]
  * ==========================================
  */
@@ -464,22 +493,20 @@ function calculateTax(price, isRegulated, homes, isLarge) {
     // 다주택자 중과세율 적용 (2026년 현행 기준 단순화)
     if (homes >= 2) {
         if (isRegulated) {
-            rate = 0.12; // 규제 3주택 이상 또는 규제 2주택 등 극단적 단순화 (실무상 8% or 12%)
-            if (homes == 1) rate = 0.08; // 입력폼상 homes 2는 2주택 이상. 1주택상태에서 매수면 2주택 8%
+            rate = 0.12; 
         } else {
-            rate = 0.08; // 비규제 3주택 8%, 4주택 12%
+            rate = 0.08; 
         }
-        eduRate = 0.004; // 중과 시 교육세 0.4%
+        eduRate = 0.004; 
     } else {
         // 1주택자 (무주택에서 1주택 됨)
         if (price <= 60000) {
             rate = 0.01;
             eduRate = 0.001;
         } else if (price <= 90000) {
-            // 6억 ~ 9억: (매매가(억) * 2 / 3 - 3) * 1%
             const priceUk = price / 10000;
             rate = (priceUk * (2/3) - 3) / 100;
-            eduRate = rate * 0.1; // 취득세율의 10%
+            eduRate = rate * 0.1; 
         } else {
             rate = 0.03;
             eduRate = 0.003;
@@ -493,7 +520,7 @@ function calculateTax(price, isRegulated, homes, isLarge) {
 // 2. 중개수수료 산출 (법정 상한요율 적용 + VAT 10%)
 function calculateBrokerFee(price) {
     let rate = 0;
-    if (price < 20000) rate = 0.005; // 한도액 로직은 간소화
+    if (price < 20000) rate = 0.005; 
     else if (price < 90000) rate = 0.004;
     else if (price < 120000) rate = 0.005;
     else if (price < 150000) rate = 0.006;
@@ -513,8 +540,8 @@ function calculateBondDiscount(price) {
 
 // 4. 수입인지대
 function calculateStampDuty(price) {
-    if (price > 100000) return 35; // 10억 초과 35만 원
-    if (price >= 10000) return 15; // 1억~10억 15만 원
+    if (price > 100000) return 35; 
+    if (price >= 10000) return 15; 
     return 0;
 }
 
@@ -524,6 +551,16 @@ function calculateLegalFee(price) {
     const prog = price * CONSTANTS.FEE.LEGAL_PROGRESSIVE_RATE;
     const agency = CONSTANTS.FEE.LEGAL_AGENCY_FEE;
     return Math.floor(base + prog + agency);
+}
+
+// 총 부대비용 합계
+function calculateTotalFees(price, isRegulated, homes, isLarge) {
+    if (price <= 0) return 0;
+    return calculateTax(price, isRegulated, homes, isLarge) +
+           calculateBrokerFee(price) +
+           calculateBondDiscount(price) +
+           calculateStampDuty(price) +
+           calculateLegalFee(price);
 }
 
 /**
@@ -539,7 +576,7 @@ function calculatePMT(rate, nper, pv) {
 
 function generateAmortizationSchedule(loanAmount, annualRate, totalMonths, method) {
     const tbody = document.getElementById('schedule-body');
-    const scheduleContainer = document.getElementById('schedule-container');
+    if (!tbody) return;
     
     if (loanAmount <= 0) {
         tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center">대출액이 없습니다.</td></tr>';
@@ -550,7 +587,6 @@ function generateAmortizationSchedule(loanAmount, annualRate, totalMonths, metho
     let balance = loanAmount;
     let rows = '';
 
-    // 너무 많은 데이터 방지를 위해 최대 600회까지만 표시
     for (let month = 1; month <= Math.min(totalMonths, 600); month++) {
         let interest = balance * monthlyRate;
         let principal = 0;
@@ -593,7 +629,6 @@ function getDsrLimit(income, calcRate, termYears) {
     const monthlyRate = calcRate / 12;
     const totalMonths = termYears * 12;
 
-    // 대출원금 = 월납입액 / (r*(1+r)^n / ((1+r)^n - 1))
     const maxMonthlyPayment = maxYearlyPayment / 12;
     const maxLoan = maxMonthlyPayment * ((Math.pow(1 + monthlyRate, totalMonths) - 1) / (monthlyRate * Math.pow(1 + monthlyRate, totalMonths)));
     
@@ -604,7 +639,7 @@ function getDsrLimit(income, calcRate, termYears) {
 function getLtvLimit(price, isRegulated, homes, isFirstHome) {
     let ltvRate = 0;
     if (isFirstHome) {
-        ltvRate = 0.7; // 생애최초 70%
+        ltvRate = 0.7; 
     } else if (isRegulated) {
         ltvRate = CONSTANTS.LOAN.LTV.REGULATED[homes];
     } else {
@@ -615,39 +650,131 @@ function getLtvLimit(price, isRegulated, homes, isFirstHome) {
 
 /**
  * ==========================================
+ * [역산 로직 (보유 현금 -> 매매가)]
+ * ==========================================
+ */
+// 시나리오 1: 대출 활용 시 역산 (Binary Search)
+function reversePriceWithLoan(targetCash, income, calcInterest, termYears, isRegulated, homes, isFirstHome, isLarge) {
+    let low = 0;
+    let high = 500000; // 최대 50억까지 검색
+    let bestPrice = 0;
+
+    for (let i = 0; i < 20; i++) { // 20회 반복으로 충분한 정밀도 확보
+        let mid = (low + high) / 2;
+        let ltvLimit = getLtvLimit(mid, isRegulated, homes, isFirstHome);
+        let dsrLimit = getDsrLimit(income, calcInterest, termYears);
+        let maxLoan = Math.min(ltvLimit, dsrLimit);
+        if (mid >= 150000) maxLoan = Math.min(maxLoan, 60000); // 15억 규제 반영
+
+        let fees = calculateTotalFees(mid, isRegulated, homes, isLarge);
+        let requiredCash = mid - maxLoan + fees;
+
+        if (requiredCash <= targetCash) {
+            bestPrice = mid;
+            low = mid;
+        } else {
+            high = mid;
+        }
+    }
+    return Math.floor(bestPrice);
+}
+
+// 시나리오 2: 갭 투자 시 역산 (Binary Search)
+function reversePriceWithGap(targetCash, jeonseRate, isRegulated, homes, isLarge) {
+    let low = 0;
+    let high = 500000;
+    let bestPrice = 0;
+
+    for (let i = 0; i < 20; i++) {
+        let mid = (low + high) / 2;
+        let gap = mid * (1 - jeonseRate / 100);
+        let fees = calculateTotalFees(mid, isRegulated, homes, isLarge);
+        let requiredCash = gap + fees;
+
+        if (requiredCash <= targetCash) {
+            bestPrice = mid;
+            low = mid;
+        } else {
+            high = mid;
+        }
+    }
+    return Math.floor(bestPrice);
+}
+
+/**
+ * ==========================================
  * [메인 업데이트 함수]
  * ==========================================
  */
 function updateDashboard() {
-    // 1. 값 가져오기
-    const price = getDOMValue('input-price');
-    const jeonse = getDOMValue('input-jeonse');
+    // 1. 공통 입력값 가져오기
     const income = getDOMValue('input-income');
     const baseInterest = getDOMValue('input-interest') / 100;
-    const termYears = getDOMValue('input-term') || 40; // 기본값 40년 방어
+    const termYears = getDOMValue('input-term') || 40;
     const isRegulated = getRadioValue('regulation') === 'true';
     const homes = parseInt(getRadioValue('homes'), 10);
     const isLarge = getRadioValue('area') === 'large';
     const isFirstHome = document.getElementById('input-first-home').checked;
-
-    // 입력값 텍스트 실시간 반영
-    document.getElementById('disp-price').innerText = formatMoney(price);
-    document.getElementById('disp-jeonse').innerText = formatMoney(jeonse);
-    document.getElementById('disp-income').innerText = formatMoney(income);
-
-    // DSR 계산 금리 (입력 금리 + 스트레스 금리)
+    
+    // DSR 계산 금리
     const calcInterest = baseInterest + CONSTANTS.LOAN.STRESS_RATE;
     document.getElementById('out-calc-rate').innerText = `${(calcInterest * 100).toFixed(2)}% (스트레스 포함)`;
+    document.getElementById('disp-income').innerText = formatMoney(income);
 
-    // 에러 핸들링 (전세가 > 매매가)
+    let price, jeonse, cash;
+
+    if (currentMode === 'price') {
+        price = getDOMValue('input-price');
+        jeonse = getDOMValue('input-jeonse');
+        document.getElementById('disp-price').innerText = formatMoney(price);
+        document.getElementById('disp-jeonse').innerText = formatMoney(jeonse);
+        
+        // 타이틀 복구
+        document.querySelector('#out-loan-max').previousElementSibling.innerHTML = '최대 대출 가능액 <span class="text-xs">(Min(LTV, DSR))</span>';
+        document.querySelector('#out-final-cash-1').previousElementSibling.innerText = '최종 필요 현금 (매매가 - 대출금 + 부대비용)';
+        document.querySelector('#out-gap-amount').previousElementSibling.innerText = '갭 금액 (매매가 - 전세가)';
+        document.querySelector('#out-final-cash-2').previousElementSibling.innerText = '최종 필요 현금 (갭 금액 + 부대비용)';
+
+    } else {
+        cash = getDOMValue('input-cash');
+        const jeonseRate = getDOMValue('input-jeonse-rate');
+        document.getElementById('disp-cash').innerText = formatMoney(cash);
+
+        // 역산 수행
+        price = reversePriceWithLoan(cash, income, calcInterest, termYears, isRegulated, homes, isFirstHome, isLarge);
+        const priceGap = reversePriceWithGap(cash, jeonseRate, isRegulated, homes, isLarge);
+        
+        // UI 텍스트 변경 (역산 모드)
+        document.querySelector('#out-loan-max').previousElementSibling.innerHTML = '구매 가능 매매가 <span class="text-xs">(주담대 활용 시)</span>';
+        document.querySelector('#out-final-cash-1').previousElementSibling.innerText = '입력하신 보유 현금';
+        document.querySelector('#out-gap-amount').previousElementSibling.innerText = '구매 가능 매매가 (갭 투자 시)';
+        document.querySelector('#out-final-cash-2').previousElementSibling.innerText = '입력하신 보유 현금';
+
+        // 시나리오 1 결과 표시
+        document.getElementById('out-loan-max').innerText = formatMoney(price);
+        document.getElementById('out-final-cash-1').innerText = formatMoney(cash);
+
+        // 시나리오 2 결과 표시
+        document.getElementById('out-gap-amount').innerText = formatMoney(priceGap);
+        document.getElementById('out-final-cash-2').innerText = formatMoney(cash);
+
+        // 시나리오 2 전세가율 표시
+        document.getElementById('out-jeonse-rate').innerText = `목표 전세가율 ${jeonseRate}%`;
+
+        // 부대비용 계산을 위한 price 설정 (시나리오 1 기준)
+        // (실제로는 시나리오 1과 2의 price가 다르지만, 상세 내역에는 시나리오 1 기준으로 표시)
+        jeonse = price * (jeonseRate / 100);
+    }
+
+    // 2. 에러 핸들링
     const errorMsg = document.getElementById('error-msg');
-    if (jeonse > price) {
+    if (currentMode === 'price' && jeonse > price) {
         errorMsg.classList.remove('hidden');
     } else {
         errorMsg.classList.add('hidden');
     }
 
-    // 2. 부대비용 공통 산출
+    // 3. 부대비용 산출 (현재 설정된 price 기준)
     const tax = calculateTax(price, isRegulated, homes, isLarge);
     const broker = calculateBrokerFee(price);
     const bond = calculateBondDiscount(price);
@@ -655,7 +782,6 @@ function updateDashboard() {
     const legal = calculateLegalFee(price);
     const totalIncidentalFee = tax + broker + bond + stamp + legal;
 
-    // 부대비용 DOM 업데이트 (시나리오 1, 2 공통)
     [1, 2].forEach(num => {
         document.getElementById(`dtl-tax-${num}`).innerText = formatMoney(tax);
         document.getElementById(`dtl-broker-${num}`).innerText = formatMoney(broker);
@@ -665,23 +791,25 @@ function updateDashboard() {
         document.getElementById(`out-fee-total-${num}`).innerText = formatMoney(totalIncidentalFee);
     });
 
-    // 3. 시나리오 1 산출 (실거주)
+    // 4. 시나리오 1 상세 (대출)
     const ltvLimit = getLtvLimit(price, isRegulated, homes, isFirstHome);
     const dsrLimit = getDsrLimit(income, calcInterest, termYears);
     let maxLoan = Math.min(ltvLimit, dsrLimit);
+    if (price >= 150000) maxLoan = Math.min(maxLoan, 60000);
 
-    // [추가] 15억 초과 시 주담대 6억 제한 (사용자 요청 규제)
-    if (price >= 150000) {
-        maxLoan = Math.min(maxLoan, 60000);
+    if (currentMode === 'price') {
+        const finalCash1 = price - maxLoan + totalIncidentalFee;
+        document.getElementById('out-loan-max').innerText = formatMoney(maxLoan);
+        document.getElementById('out-final-cash-1').innerText = formatMoney(Math.max(0, finalCash1));
     }
-    
-    const finalCash1 = price - maxLoan + totalIncidentalFee;
-    
-    // 월 예상 상환액 계산 (상환 방식 옵션 반영)
+
+    document.getElementById('out-ltv-limit').innerText = formatMoney(ltvLimit);
+    document.getElementById('out-dsr-limit').innerText = formatMoney(dsrLimit);
+
+    // 월 상환액
     const repaymentMethod = getRadioValue('repayment');
     let monthlyPaymentManWon = 0;
     let paymentSuffix = "";
-
     const actualMonthlyRate = baseInterest / 12;
     const totalMonths = termYears * 12;
 
@@ -696,26 +824,18 @@ function updateDashboard() {
         monthlyPaymentManWon = maxLoan * actualMonthlyRate;
         paymentSuffix = " (거치 기간)";
     }
-
-    document.getElementById('out-ltv-limit').innerText = formatMoney(ltvLimit);
-    document.getElementById('out-dsr-limit').innerText = formatMoney(dsrLimit);
-    document.getElementById('out-loan-max').innerText = formatMoney(maxLoan);
     document.getElementById('out-monthly-payment').innerText = `약 ${Math.floor(monthlyPaymentManWon).toLocaleString()}만 원${paymentSuffix}`;
-    
-    // 시나리오 1의 최종 필요 현금이 음수가 되는 등 비정상적일 때 방어 로직
-    document.getElementById('out-final-cash-1').innerText = formatMoney(Math.max(0, finalCash1));
-
-    // 상환 스케줄 업데이트
     generateAmortizationSchedule(maxLoan, baseInterest, totalMonths, repaymentMethod);
 
-    // 4. 시나리오 2 산출 (갭 투자)
-    const gapAmount = price - jeonse;
-    const jeonseRate = price > 0 ? ((jeonse / price) * 100).toFixed(1) : 0;
-    const finalCash2 = gapAmount + totalIncidentalFee;
-
-    document.getElementById('out-gap-amount').innerText = formatMoney(gapAmount);
-    document.getElementById('out-jeonse-rate').innerText = `전세가율 ${jeonseRate}%`;
-    document.getElementById('out-final-cash-2').innerText = formatMoney(Math.max(0, finalCash2));
+    // 5. 시나리오 2 상세 (갭)
+    if (currentMode === 'price') {
+        const gapAmount = price - jeonse;
+        const jeonseRate = price > 0 ? ((jeonse / price) * 100).toFixed(1) : 0;
+        const finalCash2 = gapAmount + totalIncidentalFee;
+        document.getElementById('out-gap-amount').innerText = formatMoney(gapAmount);
+        document.getElementById('out-jeonse-rate').innerText = `전세가율 ${jeonseRate}%`;
+        document.getElementById('out-final-cash-2').innerText = formatMoney(Math.max(0, finalCash2));
+    }
 }
 
 /**
@@ -724,14 +844,40 @@ function updateDashboard() {
  * ==========================================
  */
 document.addEventListener('DOMContentLoaded', () => {
-    // 모든 input, radio 변경 시 실시간 업데이트 트리거
+    // 모드 전환
+    const btnModePrice = document.getElementById('btn-mode-price');
+    const btnModeCash = document.getElementById('btn-mode-cash');
+    const sectionPriceInput = document.getElementById('section-price-input');
+    const sectionCashInput = document.getElementById('section-cash-input');
+
+    btnModePrice.addEventListener('click', () => {
+        currentMode = 'price';
+        btnModePrice.classList.add('bg-white', 'dark:bg-slate-600', 'shadow-sm', 'text-blue-600', 'dark:text-blue-400');
+        btnModePrice.classList.remove('text-slate-500', 'dark:text-slate-400');
+        btnModeCash.classList.remove('bg-white', 'dark:bg-slate-600', 'shadow-sm', 'text-blue-600', 'dark:text-blue-400');
+        btnModeCash.classList.add('text-slate-500', 'dark:text-slate-400');
+        sectionPriceInput.classList.remove('hidden');
+        sectionCashInput.classList.add('hidden');
+        updateDashboard();
+    });
+
+    btnModeCash.addEventListener('click', () => {
+        currentMode = 'cash';
+        btnModeCash.classList.add('bg-white', 'dark:bg-slate-600', 'shadow-sm', 'text-blue-600', 'dark:text-blue-400');
+        btnModeCash.classList.remove('text-slate-500', 'dark:text-slate-400');
+        btnModePrice.classList.remove('bg-white', 'dark:bg-slate-600', 'shadow-sm', 'text-blue-600', 'dark:text-blue-400');
+        btnModePrice.classList.add('text-slate-500', 'dark:text-slate-400');
+        sectionPriceInput.classList.add('hidden');
+        sectionCashInput.classList.remove('hidden');
+        updateDashboard();
+    });
+
     const inputs = document.querySelectorAll('input');
     inputs.forEach(input => {
         input.addEventListener('input', updateDashboard);
         input.addEventListener('change', updateDashboard);
     });
 
-    // 상환 스케줄 토글
     const toggleBtn = document.getElementById('toggle-schedule');
     const scheduleContainer = document.getElementById('schedule-container');
     const scheduleArrow = document.getElementById('schedule-arrow');
@@ -741,7 +887,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isHidden) {
             scheduleContainer.classList.remove('hidden');
             scheduleArrow.classList.add('rotate-180');
-            // 토글 시에만 새로고침 (성능 최적화)
             updateDashboard();
         } else {
             scheduleContainer.classList.add('hidden');
@@ -749,7 +894,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 초기 로드 시 1회 실행
     updateDashboard();
 });
 

@@ -694,6 +694,17 @@ function getLtvLimit(price, isRegulated, homes, isFirstHome) {
     return Math.floor(price * ltvRate);
 }
 
+// [신규] 주택 가격별 최종 대출 한도 적용 (사용자 정의 규제)
+function getFinalLoanLimit(price, ltvLimit, dsrLimit) {
+    let hardCap = 60000; // 15억 이하: 6억
+    if (price > 250000) {
+        hardCap = 20000; // 25억 초과: 2억
+    } else if (price > 150000) {
+        hardCap = 40000; // 15억 초과 25억 이하: 4억
+    }
+    return Math.min(ltvLimit, dsrLimit, hardCap);
+}
+
 /**
  * ==========================================
  * [역산 로직 (보유 현금 -> 매매가)]
@@ -709,8 +720,7 @@ function reversePriceWithLoan(targetCash, income, calcInterest, termYears, isReg
         let mid = (low + high) / 2;
         let ltvLimit = getLtvLimit(mid, isRegulated, homes, isFirstHome);
         let dsrLimit = getDsrLimit(income, calcInterest, termYears);
-        let maxLoan = Math.min(ltvLimit, dsrLimit);
-        if (mid >= 150000) maxLoan = Math.min(maxLoan, 60000); 
+        let maxLoan = getFinalLoanLimit(mid, ltvLimit, dsrLimit);
 
         let fees = calculateTotalFees(mid, isRegulated, homes, isLarge);
         let requiredCash = mid - maxLoan + fees;
@@ -863,8 +873,7 @@ function updateDashboard() {
             if (num === 1) {
                 const ltvLimit_bd = getLtvLimit(price, isRegulated, homes, isFirstHome);
                 const dsrLimit_bd = getDsrLimit(income, calcInterest, termYears);
-                let maxLoan_bd = Math.min(ltvLimit_bd, dsrLimit_bd);
-                if (price >= 150000) maxLoan_bd = Math.min(maxLoan_bd, 60000);
+                const maxLoan_bd = getFinalLoanLimit(price, ltvLimit_bd, dsrLimit_bd);
 
                 document.getElementById('bd-price-1').innerText = formatMoney(price);
                 document.getElementById('bd-loan-1').innerText = `- ${formatMoney(maxLoan_bd)}`;
@@ -883,8 +892,7 @@ function updateDashboard() {
     // 4. 시나리오 1 상세 (대출)
     const ltvLimit = getLtvLimit(price, isRegulated, homes, isFirstHome);
     const dsrLimit = getDsrLimit(income, calcInterest, termYears);
-    let maxLoan = Math.min(ltvLimit, dsrLimit);
-    if (price >= 150000) maxLoan = Math.min(maxLoan, 60000);
+    const maxLoan = getFinalLoanLimit(price, ltvLimit, dsrLimit);
 
     if (currentMode === 'price') {
         const finalCash1 = price - maxLoan + totalIncidentalFee;
